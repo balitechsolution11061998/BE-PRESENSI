@@ -1,49 +1,45 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Api\Controllers;
 
+namespace App\Http\Controllers;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 
 class LoginController extends Controller
 {
-    /**
-     * Handle the incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function __invoke(Request $request)
+    public function __construct()
     {
-        //set validation
-        $validator = Validator::make($request->all(), [
-            'username'     => 'required',
-            'password'  => 'required'
+        $this->middleware('auth:api', ['except' => ['login','register']]);
+    }
+
+    public function login(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|string|email',
+            'password' => 'required|string',
         ]);
+        $credentials = $request->only('email', 'password');
 
-        //if validation fails
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-
-        //get credentials from request
-        $credentials = $request->only('username', 'password');
-
-        //if auth failed
-        if(!$token = auth()->guard('api')->attempt($credentials)) {
+        $token = Auth::attempt($credentials);
+        if (!$token) {
             return response()->json([
-                'success' => false,
-                'message' => 'Username atau Password Anda salah'
+                'status' => 'error',
+                'message' => 'Unauthorized',
             ], 401);
         }
 
-        //if auth success
+        $user = Auth::user();
         return response()->json([
-            'success' => true,
-            'statusCode'=>200,
-            'user'    => auth()->guard('api')->user(),
-            'token'   => $token
-        ], 200);
+                'status' => 'success',
+                'user' => $user,
+                'authorisation' => [
+                    'token' => $token,
+                    'type' => 'bearer',
+                ]
+            ]);
+
     }
 }

@@ -3,7 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Api\Controllers\PresensiController;
-
+use App\Http\Controllers\Api\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,9 +22,14 @@ use App\Http\Api\Controllers\PresensiController;
 
 Route::post('/presensi', [PresensiController::class, 'store']);
 
+Route::controller(AuthController::class)->group(function () {
+    Route::post('login', 'login');
+    Route::post('register', 'register');
+    Route::post('logout', 'logout');
+    Route::post('refresh', 'refresh');
 
-Route::post('/login', App\Http\Controllers\Api\LoginController::class)->name('login');
-Route::post('/register', App\Http\Controllers\Api\RegisterController::class)->name('register');
+});
+
 
 
 
